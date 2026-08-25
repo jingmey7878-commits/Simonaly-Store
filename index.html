@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Simonaly Store</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--wine:#741a24;--rose:#d8899f;--cream:#fff8f8;--ink:#32161b;--line:#ead4d8}
+*{box-sizing:border-box}body{margin:0;background:var(--cream);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{background:linear-gradient(135deg,#5d111a,#9a2d40);color:#fff;padding:22px 18px 18px;border-radius:0 0 28px 28px}
+.brand{display:flex;align-items:center;gap:12px}.logo{width:48px;height:48px;border:2px solid #f7c6d0;border-radius:50%;display:grid;place-items:center;font:30px Georgia;color:#f7c6d0}
+h1{font:30px Georgia;margin:0}.sub{opacity:.85;font-size:13px;margin-top:2px}
+.search{margin-top:18px;background:#fff;color:#777;border-radius:14px;padding:13px 15px}
+.tabs{display:flex;gap:8px;overflow:auto;padding:14px 14px 4px}.tabs button{border:1px solid var(--line);background:#fff;border-radius:20px;padding:9px 14px;white-space:nowrap;color:var(--wine)}.tabs button.active{background:var(--wine);color:#fff}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px}.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:10px;box-shadow:0 4px 14px #5d111a0d}.pic{height:150px;border-radius:14px;background:linear-gradient(145deg,#f6d9df,#fff);display:grid;place-items:center;font-size:55px}.name{font-weight:650;margin-top:9px}.cat{font-size:12px;color:#8d6b70;margin:3px 0}.price{font-weight:700;color:var(--wine)}.add{width:100%;border:0;background:var(--wine);color:#fff;border-radius:11px;padding:10px;margin-top:8px;font-weight:650}
+.cart{position:fixed;left:14px;right:14px;bottom:14px;background:#fff;border:1px solid var(--line);box-shadow:0 10px 35px #0002;border-radius:18px;padding:12px;display:flex;align-items:center;justify-content:space-between;z-index:5}.cart button{background:var(--wine);color:#fff;border:0;border-radius:12px;padding:11px 16px;font-weight:700}
+.modal{display:none;position:fixed;inset:0;background:#0006;z-index:10;align-items:flex-end}.sheet{background:#fff;width:100%;max-height:88vh;overflow:auto;border-radius:26px 26px 0 0;padding:20px}.sheet h2{font:24px Georgia;margin:0 0 14px}.row{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #eee}.total{font-size:20px;font-weight:800;margin:16px 0}.field{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;margin:6px 0 10px;font:inherit}.checkout{width:100%;padding:13px;border:0;border-radius:13px;background:var(--wine);color:#fff;font-weight:750}.close{float:right;border:0;background:#f6e6e9;border-radius:50%;width:34px;height:34px}
+.empty{padding:28px;text-align:center;color:#8d6b70}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><div class="logo">S</div><div><h1>Simonaly Store</h1><div class="sub">Beauty • Confidence • You</div></div></div>
+  <div class="search">🔎 Search beauty products</div>
+</header>
+<div class="tabs" id="tabs"></div>
+<main class="grid" id="grid"></main>
+<div class="cart"><div><b>🛒 Cart</b><div id="cartInfo">0 items</div></div><button onclick="openCart()">View Cart</button></div>
+
+<div class="modal" id="modal">
+ <div class="sheet">
+  <button class="close" onclick="closeCart()">×</button>
+  <h2>Your Cart</h2>
+  <div id="cartList"></div>
+  <div class="total" id="total"></div>
+  <input class="field" id="customer" placeholder="Your name">
+  <input class="field" id="phone" placeholder="Phone number">
+  <textarea class="field" id="address" rows="3" placeholder="Delivery address"></textarea>
+  <button class="checkout" onclick="placeOrder()">Place Order</button>
+ </div>
+</div>
+
+<script>
+const products=[
+ {id:1,name:"Hydrating Glow Serum",cat:"Skincare",price:18,emoji:"✨"},
+ {id:2,name:"Soft Matte Lip Tint",cat:"Makeup",price:12,emoji:"💄"},
+ {id:3,name:"Repair Hair Treatment",cat:"Hair Care",price:22,emoji:"🫧"},
+ {id:4,name:"Rose Body Lotion",cat:"Body Care",price:15,emoji:"🌹"},
+ {id:5,name:"Daily Sun Cream SPF50",cat:"Skincare",price:16,emoji:"☀️"},
+ {id:6,name:"Velvet Cushion",cat:"Makeup",price:25,emoji:"🎀"}
+];
+let cart=JSON.parse(localStorage.getItem("sim_cart")||"[]");
+let category="All";
+const cats=["All","Skincare","Makeup","Hair Care","Body Care"];
+const tabs=document.getElementById("tabs");
+cats.forEach(c=>{const b=document.createElement("button");b.textContent=c;b.onclick=()=>{category=c;render();};tabs.appendChild(b);});
+function render(){
+ [...tabs.children].forEach(b=>b.classList.toggle("active",b.textContent===category));
+ const list=products.filter(p=>category==="All"||p.cat===category);
+ grid.innerHTML=list.map(p=>`<article class="card"><div class="pic">${p.emoji}</div><div class="name">${p.name}</div><div class="cat">${p.cat}</div><div class="price">$${p.price.toFixed(2)}</div><button class="add" onclick="add(${p.id})">Add to Cart</button></article>`).join("");
+ updateCart();
+}
+function add(id){cart.push(id);save();updateCart();}
+function save(){localStorage.setItem("sim_cart",JSON.stringify(cart));}
+function updateCart(){cartInfo.textContent=cart.length+" item"+(cart.length===1?"":"s");}
+function openCart(){
+ modal.style.display="flex";const counts={};cart.forEach(id=>counts[id]=(counts[id]||0)+1);
+ let total=0;cartList.innerHTML=Object.entries(counts).map(([id,q])=>{let p=products.find(x=>x.id==id);total+=p.price*q;return `<div class="row"><span>${p.emoji} ${p.name} × ${q}</span><b>$${(p.price*q).toFixed(2)}</b></div>`}).join("")||'<div class="empty">Your cart is empty.</div>';
+ document.getElementById("total").textContent="Total: $"+total.toFixed(2);
+}
+function closeCart(){modal.style.display="none";}
+function placeOrder(){
+ if(!cart.length){alert("Your cart is empty.");return;}
+ const name=customer.value.trim(),phoneVal=phone.value.trim(),addr=address.value.trim();
+ if(!name||!phoneVal||!addr){alert("Please enter your name, phone number and delivery address.");return;}
+ const order={name,phone:phoneVal,address:addr,items:cart,created:new Date().toISOString()};
+ localStorage.setItem("sim_last_order",JSON.stringify(order));
+ cart=[];save();closeCart();render();
+ alert("Thank you! Your order has been recorded. We can connect this checkout to your Telegram order system next.");
+}
+if(window.Telegram?.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand();}
+render();
+</script>
+</body>
+</html>
